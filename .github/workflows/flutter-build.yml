@@ -900,7 +900,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
+          
       - name: Deep De-brand and Obfuscation
         shell: bash
         run: |
@@ -908,6 +908,8 @@ jobs:
           #因Cargo.toml中的https://.*rustdesk是需下载的网址不能换应排除
           # 1. 全局替换源码字符串 (严格排除 .github 目录防止工作流崩溃)
           # 范围：Rust, Dart, Java, Kotlin, XML, TOML, Gradle, Python, C++
+          find . -type f -exec sed -i -E -e 's/librustdesk/libmykkk/g' {} +
+          cat Cargo.toml
           find . -type f \
             -not -path '*/.*' \
             -not -path './.github/*' \
