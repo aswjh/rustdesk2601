@@ -900,7 +900,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          
+
       - name: Deep De-brand and Obfuscation
         shell: bash
         run: |
@@ -908,15 +908,15 @@ jobs:
           #因Cargo.toml中的https://.*rustdesk是需下载的网址不能换应排除
           # 1. 全局替换源码字符串 (严格排除 .github 目录防止工作流崩溃)
           # 范围：Rust, Dart, Java, Kotlin, XML, TOML, Gradle, Python, C++
+          #flutter-build.yml本身内的rustdesk等字符需手工修改。因在此处执行时再修改自身已不能生效。
           find . -type f -exec sed -i -E -e 's/librustdesk/libmykkk/g' {} +
-          cat Cargo.toml
           find . -type f \
             -not -path '*/.*' \
             -not -path './.github/*' \
             \( -name "*.rs" -o -name "*.dart" -o -name "*.java" -o -name "*.kt" -o -name "*.xml" -o -name "*.toml" -o -name "*.gradle" -o -name "*.py" -o -name "*.cpp" -o -name "*.h" \) \
             -exec sed -i -E \
             -e '/https?:\/\//!s/\<carriez\>/roomz/g' \
-            -e '/https?:\/\//!s/\<rustdesk\>/mykkk/g' \
+            -e '/https?:\/\//!s/\<rustdesk\>/mykkk/g' -e '/^name\s*=/s/"rustdesk"/"mykkk"/g' \
             -e '/https?:\/\//!s/\<RustDesk\>/MyKkk/g' {} +
           # 2. 物理重命名 Android 包名路径 (防止编译时 Package 声明不匹配)
           # 将 com/carriez/rustdesk 迁移至 com/roomz/mykkk
@@ -938,7 +938,7 @@ jobs:
           find flutter/android/app/src/main/res -name "ic_launcher*.png" -exec sh -c 'echo "$RANDOM" >> "$1"' -- {} \;
           # 5. 改变资源文件 MD5 (在 strings.xml 末尾注入随机注释)
           echo "" >> flutter/android/app/src/main/res/values/strings.xml
-          echo "De-branding complete."
+          echo "De-branding complete."     
 
       - name: Install flutter
         uses: subosito/flutter-action@v2
@@ -1020,30 +1020,30 @@ jobs:
             aarch64-linux-android)
               ./flutter/ndk_arm64.sh
               mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a
-              cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
+              cp ./target/${{ matrix.job.target }}/release/liblibmykkk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/libmykkk.so
             ;;
             armv7-linux-androideabi)
               ./flutter/ndk_arm.sh
               mkdir -p ./flutter/android/app/src/main/jniLibs/armeabi-v7a
-              cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/librustdesk.so
+              cp ./target/${{ matrix.job.target }}/release/liblibmykkk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/libmykkk.so
             ;;
             x86_64-linux-android)
               ./flutter/ndk_x64.sh
               mkdir -p ./flutter/android/app/src/main/jniLibs/x86_64
-              cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/x86_64/librustdesk.so
+              cp ./target/${{ matrix.job.target }}/release/liblibmykkk.so ./flutter/android/app/src/main/jniLibs/x86_64/libmykkk.so
             ;;
             i686-linux-android)
               ./flutter/ndk_x86.sh
               mkdir -p ./flutter/android/app/src/main/jniLibs/x86
-              cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/x86/librustdesk.so
+              cp ./target/${{ matrix.job.target }}/release/liblibmykkk.so ./flutter/android/app/src/main/jniLibs/x86/libmykkk.so
             ;;
           esac
 
       - name: Upload Rustdesk library to Artifacts
         uses: actions/upload-artifact@master
         with:
-          name: librustdesk.so.${{ matrix.job.target }}
-          path: ./target/${{ matrix.job.target }}/release/liblibrustdesk.so
+          name: libmykkk.so.${{ matrix.job.target }}
+          path: ./target/${{ matrix.job.target }}/release/liblibmykkk.so
 
       - name: Build rustdesk
         shell: bash
@@ -1059,43 +1059,43 @@ jobs:
             aarch64-linux-android)
               mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/
-              cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
+              cp ./target/${{ matrix.job.target }}/release/liblibmykkk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/libmykkk.so
               # build flutter
               pushd flutter
               flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm64 --split-per-abi
-              mv build/app/outputs/flutter-apk/app-arm64-v8a-${{ matrix.job.reltype }}.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
+              mv build/app/outputs/flutter-apk/app-arm64-v8a-${{ matrix.job.reltype }}.apk ../mykkk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
             ;;
             armv7-linux-androideabi)
               mkdir -p ./flutter/android/app/src/main/jniLibs/armeabi-v7a
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/
-              cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/librustdesk.so
+              cp ./target/${{ matrix.job.target }}/release/liblibmykkk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/libmykkk.so
               # build flutter
               pushd flutter
               flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm --split-per-abi
-              mv build/app/outputs/flutter-apk/app-armeabi-v7a-${{ matrix.job.reltype }}.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
+              mv build/app/outputs/flutter-apk/app-armeabi-v7a-${{ matrix.job.reltype }}.apk ../mykkk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
             ;;
             x86_64-linux-android)
               mkdir -p ./flutter/android/app/src/main/jniLibs/x86_64
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/x86_64/
-              cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/x86_64/librustdesk.so
+              cp ./target/${{ matrix.job.target }}/release/liblibmykkk.so ./flutter/android/app/src/main/jniLibs/x86_64/libmykkk.so
               # build flutter
               pushd flutter
               flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-x64 --split-per-abi
-              mv build/app/outputs/flutter-apk/app-x86_64-${{ matrix.job.reltype }}.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
+              mv build/app/outputs/flutter-apk/app-x86_64-${{ matrix.job.reltype }}.apk ../mykkk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
             ;;
             i686-linux-android)
               mkdir -p ./flutter/android/app/src/main/jniLibs/x86
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/i686-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/x86/
-              cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/x86/librustdesk.so
+              cp ./target/${{ matrix.job.target }}/release/liblibmykkk.so ./flutter/android/app/src/main/jniLibs/x86/libmykkk.so
               # build flutter
               pushd flutter
               flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-x86 --split-per-abi
-              mv build/app/outputs/flutter-apk/app-x86-${{ matrix.job.reltype }}.apk ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
+              mv build/app/outputs/flutter-apk/app-x86-${{ matrix.job.reltype }}.apk ../mykkk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
             ;;
           esac
           popd
           mkdir -p signed-apk; pushd signed-apk
-          mv ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk .
+          mv ../mykkk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk .
 
       # https://github.com/r0adkll/sign-android-release/issues/84#issuecomment-1889636075
       - name: Setup sign tool version variable
@@ -1108,7 +1108,7 @@ jobs:
       - uses: r0adkll/sign-android-release@v1
         name: Sign app APK
         if: env.ANDROID_SIGNING_KEY != null
-        id: sign-rustdesk
+        id: sign-mykkk
         with:
           releaseDirectory: ./signed-apk
           signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
@@ -1123,8 +1123,8 @@ jobs:
         if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@master
         with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
-          path: ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
+          name: mykkk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
+          path: ${{steps.sign-mykkk.outputs.signedReleaseFile}}
 
       - name: Publish signed apk package
         if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
@@ -1133,7 +1133,7 @@ jobs:
           prerelease: true
           tag_name: ${{ env.TAG_NAME }}
           files: |
-            ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
+            ${{steps.sign-mykkk.outputs.signedReleaseFile}}
 
       - name: Publish unsigned apk package
         if: env.ANDROID_SIGNING_KEY == null && env.UPLOAD_ARTIFACT == 'true'
@@ -1142,7 +1142,7 @@ jobs:
           prerelease: true
           tag_name: ${{ env.TAG_NAME }}
           files: |
-            signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
+            signed-apk/mykkk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
 
   build-rustdesk-android-universal:
     needs: [build-rustdesk-android]
