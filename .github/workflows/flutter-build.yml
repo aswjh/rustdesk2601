@@ -901,6 +901,43 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Deep De-brand and Obfuscation
+        shell: bash
+        run: |
+          echo "Starting de-branding process..."
+          #因Cargo.toml中的https://.*rustdesk是需下载的网址不能换应排除
+          # 1. 全局替换源码字符串 (严格排除 .github 目录防止工作流崩溃)
+          # 范围：Rust, Dart, Java, Kotlin, XML, TOML, Gradle, Python, C++
+          find . -type f \
+            -not -path '*/.*' \
+            -not -path './.github/*' \
+            \( -name "*.rs" -o -name "*.dart" -o -name "*.java" -o -name "*.kt" -o -name "*.xml" -o -name "*.toml" -o -name "*.gradle" -o -name "*.py" -o -name "*.cpp" -o -name "*.h" \) \
+            -exec sed -i -E \
+            -e '/https?:\/\//!s/\<carriez\>/roomz/g' \
+            -e '/https?:\/\//!s/\<rustdesk\>/mykkk/g' \
+            -e '/https?:\/\//!s/\<RustDesk\>/MyKkk/g' {} +
+          # 2. 物理重命名 Android 包名路径 (防止编译时 Package 声明不匹配)
+          # 将 com/carriez/rustdesk 迁移至 com/roomz/mykkk
+          echo "Relocating Android package directories..."
+          find flutter/android/app/src -type d -path "*/carriez/*" | while read -r dir; do
+            newdir=$(echo "$dir" | sed -e 's/carriez/roomz/g' -e 's/rustdesk/mykkk/g')
+            mkdir -p "$(dirname "$newdir")"
+            mv "$dir" "$newdir"
+          done
+          # 3. 针对性修改 Android 内部配置文件 (虽然在 .github 之外，但需确保覆盖)
+          if [ -d "android" ]; then
+            find flutter/android -type f -exec sed -i -E \
+              -e 's/\<carriez\>/roomz/g' \
+              -e 's/\<rustdesk\>/mykkk/g' \
+              -e 's/\<RustDesk\>/MyKkk/g' {} +
+          fi
+          # 4. 修改图标特征, 通过并在不破坏图片结构的情况下在文件末尾追加随机数改变 MD5(小米等系统会通过图标 MD5 识别 RustDesk)
+          echo "Obfuscating icon fingerprints..."
+          find flutter/android/app/src/main/res -name "ic_launcher*.png" -exec sh -c 'echo "$RANDOM" >> "$1"' -- {} \;
+          # 5. 改变资源文件 MD5 (在 strings.xml 末尾注入随机注释)
+          echo "" >> flutter/android/app/src/main/res/values/strings.xml
+          echo "De-branding complete."
+
       - name: Install flutter
         uses: subosito/flutter-action@v2
         with:
